@@ -20,15 +20,6 @@
 
   <script src="api/client.js"></script>
   <script src="api/audio.js"></script>
-  <script type="text/babel" src="i18n.jsx" data-presets="react"></script>
-  <!-- PDF.js: renders uploaded PDFs in the reader, preserving text-layer
-       selection so the existing highlight popover keeps working. -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs" type="module"></script>
-  <script type="module">
-    // The mjs build exports an ESM. Bridge it onto window so the JSX can use it.
-    import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs";
-    window.pdfjsLib = pdfjsLib;
-  </script>
   <!-- Load order: scenes & icons → dashboard widgets (Sidebar, MOODS) → tweaks → reader -->
   <script type="text/babel" src="scenes.jsx" data-presets="react"></script>
   <script type="text/babel" src="icons.jsx" data-presets="react"></script>

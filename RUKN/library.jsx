@@ -353,7 +353,7 @@ function LibraryTopBar({ search, setSearch, filter, setFilter, sort, setSort }) 
           )}
         </div>
 
-        <LangPill/>
+        
       </div>
     </header>
   );
@@ -389,7 +389,6 @@ function LibraryApp() {
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState("all");
   const [sort, setSort] = React.useState("recent");
-  const [uploadOpen, setUploadOpen] = React.useState(false);
 
   // Real book data loaded from /api/api.php?action=library.
   // Falls back to the mock arrays at the top of this file if the API isn't reachable.
@@ -491,7 +490,6 @@ function LibraryApp() {
               {filtered(myBooks).map(book => (
                 <BookCard key={book.book_id || book.id} book={book} onOpen={openBook}/>
               ))}
-              <UploadCard onClick={() => setUploadOpen(true)}/>
             </div>
           )}
 
@@ -519,26 +517,6 @@ function LibraryApp() {
           )}
         </div>
 
-        <UploadModal open={uploadOpen}
-                     onClose={() => setUploadOpen(false)}
-                     onUploaded={(book) => {
-                       // Prepend the newly-uploaded book to "My books" so it appears immediately.
-                       const coverKey = (typeof coverKeyFromTitle === "function")
-                         ? coverKeyFromTitle(book.title) : null;
-                       const fresh = {
-                         id:        coverKey || ("book_" + book.book_id),
-                         book_id:   book.book_id,
-                         title:     book.title,
-                         author:    book.author,
-                         format:    book.format,
-                         progress:  0,
-                         lang:      "en",
-                         openable:  true,
-                         isPublic:  false,
-                         hasProgress: true,
-                       };
-                       setMyBooks(prev => [fresh, ...prev]);
-                     }}/>
       </div>
 
       <TweaksPanel>

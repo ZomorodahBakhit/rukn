@@ -154,135 +154,6 @@ const IChevronRight = (p) => (
 
 Object.assign(window, { IHighlight, INote, IBookmark, IBookmarkFill, ICog, IMusic, IChevronLeft, IChevronRight });
 
-// ── PDF viewer (uses PDF.js loaded from a CDN by the HTML wrapper) ──────────
-// Renders the canvas + a text layer so the browser's native selection works
-// — which means our document-level mouseup listener still picks up selections
-// and the highlight popover appears exactly the same way as for plain text.
-function PdfViewer({ book }) {
-  const containerRef = React.useRef(null);
-  const [pageNum, setPageNum]   = React.useState(1);
-  const [pageCount, setPageCount] = React.useState(book ? book.total_pages : 1);
-  const [error, setError] = React.useState("");
-  const [scale, setScale] = React.useState(1.35);
-  const pdfDocRef = React.useRef(null);
-
-  // Load the PDF once.
-  React.useEffect(() => {
-    if (!book || !book.file_path) return;
-    if (!window.pdfjsLib) {
-      setError("PDF renderer unavailable — refresh the page.");
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-          "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs";
-        const task = window.pdfjsLib.getDocument(book.file_path);
-        const doc  = await task.promise;
-        if (cancelled) return;
-        pdfDocRef.current = doc;
-        setPageCount(doc.numPages);
-      } catch (e) {
-        if (!cancelled) setError("Could not load PDF: " + (e && e.message || e));
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [book && book.file_path]);
-
-  // Render the current page whenever pageNum / scale changes.
-  React.useEffect(() => {
-    const doc = pdfDocRef.current;
-    const host = containerRef.current;
-    if (!doc || !host) return;
-    let cancelled = false;
-    (async () => {
-      const page = await doc.getPage(pageNum);
-      if (cancelled) return;
-      const viewport = page.getViewport({ scale });
-
-      // Clear previous render.
-      host.innerHTML = "";
-      host.style.position = "relative";
-      host.style.width  = viewport.width + "px";
-      host.style.height = viewport.height + "px";
-      host.style.margin = "0 auto";
-
-      // Canvas — the raster page.
-      const canvas = document.createElement("canvas");
-      canvas.width  = viewport.width;
-      canvas.height = viewport.height;
-      canvas.style.position = "absolute";
-      canvas.style.left = "0";
-      canvas.style.top = "0";
-      host.appendChild(canvas);
-
-      // Text layer — invisible but selectable, sits exactly on top of the canvas.
-      const textLayerDiv = document.createElement("div");
-      textLayerDiv.className = "pdf-text-layer";
-      Object.assign(textLayerDiv.style, {
-        position: "absolute", left: "0", top: "0",
-        width: viewport.width + "px", height: viewport.height + "px",
-        color: "transparent", lineHeight: "1.0",
-        userSelect: "text", whiteSpace: "pre",
-      });
-      host.appendChild(textLayerDiv);
-
-      const ctx = canvas.getContext("2d");
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      if (cancelled) return;
-
-      const textContent = await page.getTextContent();
-      if (cancelled) return;
-      // Lay out each text item at its PDF coords so the selection visually matches.
-      textContent.items.forEach(item => {
-        if (!item.str) return;
-        const tx = window.pdfjsLib.Util.transform(viewport.transform, item.transform);
-        const fontSize = Math.hypot(tx[2], tx[3]);
-        const span = document.createElement("span");
-        span.textContent = item.str + " ";
-        Object.assign(span.style, {
-          position: "absolute",
-          left: tx[4] + "px",
-          top:  (tx[5] - fontSize) + "px",
-          fontSize: fontSize + "px",
-          transformOrigin: "0% 0%",
-          whiteSpace: "pre",
-        });
-        textLayerDiv.appendChild(span);
-      });
-    })();
-    return () => { cancelled = true; };
-  }, [pageNum, scale]);
-
-  if (error) {
-    return (
-      <div style={{
-          padding: 32, color: "var(--on-glass-soft)",
-          fontFamily: "var(--f-display)", fontStyle: "italic",
-          textAlign: "center" }}>
-        {error}
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div style={{
-          display: "flex", justifyContent: "center", alignItems: "center",
-          gap: 16, padding: "12px 0 14px", color: "var(--on-glass-dim)",
-          fontSize: 12, letterSpacing: "0.06em" }}>
-        <button className="t-btn" onClick={() => setPageNum(p => Math.max(1, p - 1))}
-                disabled={pageNum <= 1}>‹</button>
-        <span>Page {pageNum} of {pageCount}</span>
-        <button className="t-btn" onClick={() => setPageNum(p => Math.min(pageCount, p + 1))}
-                disabled={pageNum >= pageCount}>›</button>
-      </div>
-      <div ref={containerRef} className="reader-page pdf-host" style={{ maxWidth: "100%" }}/>
-    </div>
-  );
-}
-
 // ── Highlight colors ─────────────────────────────────────────────────────────
 const HIGHLIGHT_COLORS = [
   { id: "amber", color: "#F2C77A", soft: "rgba(242, 199, 122, 0.32)" },
@@ -729,11 +600,7 @@ function ReaderApp() {
           </a>
           <div className="reader-title">
             <span className="reader-book display">{bookMeta ? bookMeta.title : "The Prophet"}</span>
-            <span className="reader-chapter">
-              {bookMeta && bookMeta.format === "PDF" && !bookMeta.is_public_domain
-                ? `PDF · ${bookMeta.total_pages} pages`
-                : `Chapter ${chapterIdx + 3} · ${CHAPTERS[chapterIdx]}`}
-            </span>
+            <span className="reader-chapter">Chapter {chapterIdx + 3} · {CHAPTERS[chapterIdx]}</span>
           </div>
 
           <div className="reader-top-right">
@@ -784,33 +651,27 @@ function ReaderApp() {
         {/* ── Center content ────────────────────────────────────── */}
         <main className={`reader-main${notesOpen ? " has-panel" : ""}`}>
           <div className="reader-page">
-            {bookMeta && bookMeta.format === "PDF" && !bookMeta.is_public_domain ? (
-              <PdfViewer book={bookMeta}/>
-            ) : (
-              <>
-                <header className="reader-page-head">
-                  <span className="reader-page-chapter">Chapter {chapterIdx + 3}</span>
-                  <h1 className="reader-page-title display">{CHAPTERS[chapterIdx]}</h1>
-                  <div className="reader-rule"/>
-                </header>
+            <header className="reader-page-head">
+              <span className="reader-page-chapter">Chapter {chapterIdx + 3}</span>
+              <h1 className="reader-page-title display">{CHAPTERS[chapterIdx]}</h1>
+              <div className="reader-rule"/>
+            </header>
 
-                <article className="reader-prose">
-                  {chapterParagraphs.map(p => (
-                    <HighlightedParagraph key={p.id} para={p}
-                                          onHighlightTap={onHighlightTap}/>
-                  ))}
-                </article>
+            <article className="reader-prose">
+              {chapterParagraphs.map(p => (
+                <HighlightedParagraph key={p.id} para={p}
+                                      onHighlightTap={onHighlightTap}/>
+              ))}
+            </article>
 
-                <div className="reader-demo-hint">
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6,
-                                 fontSize: 11, color: "var(--on-glass-soft)",
-                                 letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                    <IHighlight size={11}/>
-                    Drag-select any passage to highlight or annotate it
-                  </span>
-                </div>
-              </>
-            )}
+            <div className="reader-demo-hint">
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6,
+                             fontSize: 11, color: "var(--on-glass-soft)",
+                             letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                <IHighlight size={11}/>
+                Drag-select any passage to highlight or annotate it
+              </span>
+            </div>
           </div>
         </main>
 

@@ -472,7 +472,7 @@ function DashboardTopBar({ t, scene, setScene, onRearrange, onPremium, premium =
           <IShuffle size={15}/>
         </button>
 
-        <LangPill/>
+        
 
         <button className="avatar" title={niceFirst}>
           <span>{avatarLetter}</span>

@@ -180,7 +180,7 @@ function JournalTopBar({ search, setSearch, count, tagFilter, setTagFilter, allT
           )}
         </div>
 
-        <LangPill/>
+        
       </div>
     </header>
   );

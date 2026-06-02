@@ -508,7 +508,7 @@ function AuthScreen() {
         </div>
 
         <div className="auth-foot">
-          <LangPill compact={false}/>
+          
         </div>
       </main>
     </div>

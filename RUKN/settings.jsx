@@ -550,7 +550,7 @@ function SettingsApp() {
               <span className="lib-count">{user.username}</span>
             </div>
             <div className="lib-actions">
-              <LangPill/>
+              
             </div>
           </header>
 
