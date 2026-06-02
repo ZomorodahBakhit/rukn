@@ -8,10 +8,9 @@ const READER_TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "font": "serif"
 }/*EDITMODE-END*/;
 
-// ── The Prophet — public domain excerpts ───────────────────────────────────
-// Each paragraph carries a `chapter` label so the reader can paginate by
-// chapter (3 chapters available: On Love, On Marriage, On Children).
-const CHAPTERS = ["On Love", "On Marriage", "On Children"];
+// ── The Prophet — Chapter 3, "On Love" (public domain excerpt) ──────────────
+// We split into 4 page-paragraphs. Each line gets an id so we can target
+// pre-existing highlights to specific spans.
 const PASSAGE = [
   {
     id: "p1",
@@ -46,40 +45,6 @@ const PASSAGE = [
   {
     id: "p6",
     text: `All these things shall love do unto you that you may know the secrets of your heart, and in that knowing become a fragment of Life's heart.`
-  },
-  // Then Almitra spoke again and said, "And what of Marriage, master?" — chapter 4
-  {
-    id: "p7",
-    text: `Then Almitra spoke again and said, "And what of Marriage, master?" And he answered saying: You were born together, and together you shall be forevermore.`
-  },
-  {
-    id: "p8",
-    text: `You shall be together when the white wings of death scatter your days. Aye, you shall be together even in the silent memory of God. But let there be spaces in your togetherness, and let the winds of the heavens dance between you.`
-  },
-  {
-    id: "p9",
-    text: `Love one another, but make not a bond of love: Let it rather be a moving sea between the shores of your souls. Fill each other's cup but drink not from one cup. Give one another of your bread but eat not from the same loaf.`
-  },
-  {
-    id: "p10",
-    text: `Sing and dance together and be joyous, but let each one of you be alone, even as the strings of a lute are alone though they quiver with the same music. Give your hearts, but not into each other's keeping. For only the hand of Life can contain your hearts.`
-  },
-  {
-    id: "p11",
-    text: `And stand together yet not too near together: For the pillars of the temple stand apart, and the oak tree and the cypress grow not in each other's shadow.`
-  },
-  // And a woman who held a babe against her bosom said, "Speak to us of Children."
-  {
-    id: "p12",
-    text: `And a woman who held a babe against her bosom said, "Speak to us of Children." And he said: Your children are not your children. They are the sons and daughters of Life's longing for itself. They come through you but not from you, and though they are with you yet they belong not to you.`
-  },
-  {
-    id: "p13",
-    text: `You may give them your love but not your thoughts, for they have their own thoughts. You may house their bodies but not their souls, for their souls dwell in the house of tomorrow, which you cannot visit, not even in your dreams.`
-  },
-  {
-    id: "p14",
-    text: `You may strive to be like them, but seek not to make them like you. For life goes not backward nor tarries with yesterday. You are the bows from which your children as living arrows are sent forth.`
   }
 ];
 
@@ -375,6 +340,92 @@ function DisplayPanel({ open, t, setTweak, onClose }) {
   );
 }
 
+// ── Mini focus timer for the reader sidebar ──────────────────────────────────
+function ReaderFocusTimer() {
+  const TOTAL = 25 * 60;
+  const [remaining, setRemaining] = React.useState(TOTAL);
+  const [running, setRunning] = React.useState(false);
+  React.useEffect(() => {
+    if (!running) return;
+    const id = setInterval(() => {
+      setRemaining(r => {
+        if (r <= 1) { setRunning(false); return TOTAL; }
+        return r - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running]);
+  const m = Math.floor(remaining / 60);
+  const s = remaining % 60;
+  const fmt = (n) => String(n).padStart(2, "0");
+  const pct = 1 - remaining / TOTAL;
+  return (
+    <>
+      <div className="w-eyebrow">Focus</div>
+      <svg className="timer-arc" viewBox="0 0 140 14" width="100%" height="10">
+        <line x1="6" y1="7" x2="134" y2="7" stroke="rgba(244,233,212,0.18)" strokeWidth="1.5"/>
+        <line x1="6" y1="7" x2={6 + 128 * pct} y2="7"
+              stroke="#F2C77A" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx={6 + 128 * pct} cy="7" r="2.5" fill="#F4E9D4"/>
+      </svg>
+      <div className={`timer-display${running ? " running" : ""}`}>
+        {fmt(m)}:{fmt(s)}
+      </div>
+      <div className="timer-controls">
+        <button className="t-btn" title="Reset"
+                onClick={() => { setRunning(false); setRemaining(TOTAL); }}>↺</button>
+        <button className="t-btn primary" title={running ? "Pause" : "Start"}
+                onClick={() => setRunning(r => !r)}>
+          {running ? "❚❚" : "▶"}
+        </button>
+        <button className="t-btn" title="Skip"
+                onClick={() => { setRemaining(TOTAL); setRunning(false); }}>⏭</button>
+      </div>
+    </>
+  );
+}
+
+// ── Mini ambient sounds panel for the reader ─────────────────────────────────
+function ReaderAmbient() {
+  const SOUNDS = [
+    { id: "rain", label: "Rain" },
+    { id: "fire", label: "Fire" },
+    { id: "cafe", label: "Café" },
+    { id: "lofi", label: "Lo-fi" },
+    { id: "forest", label: "Forest" }
+  ];
+  const [active, setActive] = React.useState({ rain: 0.65 });
+  const toggle = (id) =>
+    setActive(prev => {
+      const next = { ...prev };
+      if (id in next) delete next[id];
+      else next[id] = 0.6;
+      return next;
+    });
+  return (
+    <>
+      <div className="w-eyebrow">Ambient</div>
+      <div className="sound-grid" style={{ gap: 4 }}>
+        {SOUNDS.map(s => {
+          const isActive = s.id in active;
+          return (
+            <div key={s.id}
+                 className={`sound-chip${isActive ? " active" : ""}`}
+                 onClick={() => toggle(s.id)}>
+              <div className="viz"><span/><span/><span/></div>
+              <span>{s.label}</span>
+              <div className="vol">
+                <div className="vol-fill" style={{ width: `${(active[s.id] ?? 0.6) * 100}%` }}/>
+                <div className="vol-thumb" style={{ left: `${(active[s.id] ?? 0.6) * 100}%` }}/>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
 // ── App ──────────────────────────────────────────────────────────────────────
 function ReaderApp() {
   const [t, setTweak] = useTweaks(READER_TWEAK_DEFAULTS);
@@ -386,6 +437,19 @@ function ReaderApp() {
   const [popover, setPopover] = React.useState({ open: false, x: 0, y: 0, target: null });
   const [noteModal, setNoteModal] = React.useState({ open: false, passage: "", color: "amber" });
   const [savedNotes, setSavedNotes] = React.useState([]); // user-added in this session
+  const TOTAL_PAGES = 96;
+  const [page, setPage] = React.useState(47);
+  const [pageDraft, setPageDraft] = React.useState("47");
+  React.useEffect(() => { setPageDraft(String(page)); }, [page]);
+  const [timerOpen, setTimerOpen] = React.useState(false);
+  const [audioOpen, setAudioOpen] = React.useState(false);
+  const goPrev = () => setPage(p => Math.max(1, p - 1));
+  const goNext = () => setPage(p => Math.min(TOTAL_PAGES, p + 1));
+  const commitPageDraft = () => {
+    const n = parseInt(pageDraft, 10);
+    if (Number.isFinite(n) && n >= 1 && n <= TOTAL_PAGES) setPage(n);
+    else setPageDraft(String(page));
+  };
 
   React.useEffect(() => {
     document.documentElement.dir = "ltr";
@@ -394,22 +458,19 @@ function ReaderApp() {
   }, []);
 
   // ── Real text selection → popover ────────────────────────────────
-  // We listen at the document level so any selection inside the reader
-  // page surfaces the highlight bubble at the end of the selection.
+  // Listens for the user actually drag-selecting any text inside the reader
+  // page. When the selection settles, the highlight popover appears at the
+  // end of the selection. This is what makes "drag to highlight" actually work.
   React.useEffect(() => {
     const onMouseUp = () => {
-      // Defer so the selection has settled.
       setTimeout(() => {
         const sel = window.getSelection && window.getSelection();
         if (!sel || sel.isCollapsed) return;
         const text = sel.toString().trim();
         if (!text || text.length < 2) return;
-
-        // Only react when the selection is inside the reader page.
         let node = sel.anchorNode;
         while (node && node.nodeType !== 1) node = node.parentNode;
         if (!node || !node.closest || !node.closest(".reader-page, .reader-stage")) return;
-
         const range = sel.getRangeAt(0).getBoundingClientRect();
         setPopover({
           open: true,
@@ -424,57 +485,18 @@ function ReaderApp() {
     return () => document.removeEventListener("mouseup", onMouseUp);
   }, []);
 
-  // ── Book targeting ─────────────────────────────────────────────
-  // Reader opens whatever ?book=<id> the caller asked for. Default is
-  // 14 (the seeded The Prophet) so the bare /Reader.html still works.
-  const urlBook = (() => {
-    const p = new URLSearchParams(window.location.search);
-    const v = parseInt(p.get("book") || "", 10);
-    return Number.isFinite(v) && v > 0 ? v : 14;
-  })();
-  const [currentBookId] = React.useState(urlBook);
-
-  // ── Pagination ─────────────────────────────────────────────────
-  // Each "page" of the reader is one chapter (3 chapters from The Prophet).
-  // For non-Prophet books we'll fall back to the PDF viewer below.
-  const chapterOf = (pid) => {
-    const n = parseInt(String(pid).replace(/^p/, ""), 10) || 0;
-    if (n <= 6)  return 0;
-    if (n <= 11) return 1;
-    return 2;
+  // Click "Highlight" demo trigger — pretend the user selected text.
+  // We'll wire a "Try selecting" hint badge that fires this on click.
+  const simulateSelection = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopover({
+      open: true,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 12,
+      target: "demo",
+      passage: "When love beckons to you, follow him, though his ways are hard and steep."
+    });
   };
-  const [chapterIdx, setChapterIdx] = React.useState(0);
-  const chapterParagraphs = PASSAGE.filter(p => chapterOf(p.id) === chapterIdx);
-  const currentPage = [47, 60, 78][chapterIdx]; // page numbers within the printed book
-
-  // Persist progress when the chapter changes (so Continue Reading is up to date).
-  React.useEffect(() => {
-    if (!window.RuknAPI) return;
-    window.RuknAPI.call("advance_progress", { book_id: currentBookId });
-  }, [chapterIdx]);
-
-  // Load existing highlights for this book on mount.
-  const [savedHighlights, setSavedHighlights] = React.useState([]);
-  React.useEffect(() => {
-    if (!window.RuknAPI) return;
-    (async () => {
-      const r = await window.RuknAPI.call("list_highlights", null, { book_id: currentBookId });
-      if (r.data.ok) setSavedHighlights(r.data.highlights || []);
-    })();
-  }, []);
-
-  // ── Book metadata (for the topbar title + PDF fallback) ───────
-  const [bookMeta, setBookMeta] = React.useState(null);
-  React.useEffect(() => {
-    if (!window.RuknAPI) return;
-    (async () => {
-      const r = await window.RuknAPI.call("library");
-      if (r.data.ok) {
-        const b = (r.data.books || []).find(x => x.book_id === currentBookId);
-        if (b) setBookMeta(b);
-      }
-    })();
-  }, []);
 
   const onHighlightTap = (h, el) => {
     if (h.note) {
@@ -498,34 +520,27 @@ function ReaderApp() {
     }
   };
 
-  // Map the prototype's color palette (amber/rose/olive/sky) onto the four
-  // colors the backend's CHECK constraint accepts.
+  // The Prophet's seeded book_id in the DB schema.
+  const CURRENT_BOOK_ID = 14;
+  // Prototype palette → backend palette (only these 4 are valid in the CHECK constraint).
   const COLOR_MAP = { amber: "yellow", rose: "pink", olive: "green", sky: "blue",
                       yellow: "yellow", pink: "pink", green: "green", blue: "blue" };
 
   const onPickColor = async (colorId) => {
     const passage = popover.passage;
-    const color   = COLOR_MAP[colorId] || "yellow";
+    const dbColor = COLOR_MAP[colorId] || "yellow";
     setPopover(p => ({ ...p, open: false }));
-    // Clear the live selection so the popover doesn't immediately re-open.
     if (window.getSelection) try { window.getSelection().removeAllRanges(); } catch (e) {}
-
     if (window.RuknAPI && passage) {
       const r = await window.RuknAPI.call("save_highlight", {
-        book_id:       currentBookId,
-        page_number:   currentPage,
+        book_id:       CURRENT_BOOK_ID,
+        page_number:   page,
         selected_text: passage,
-        color,
+        color:         dbColor,
       });
-      if (r.data.ok) {
-        setSavedHighlights(prev => [r.data.highlight, ...prev]);
-        flashToast("Highlighted");
-      } else {
-        flashToast(r.data.error || "Could not save highlight");
-      }
-    } else {
-      flashToast("Highlighted");
+      if (!r.data.ok) { flashToast(r.data.error || "Could not save highlight"); return; }
     }
+    flashToast("Highlighted");
   };
   const onAddNote = () => {
     setNoteModal({ open: true, passage: popover.passage, color: "amber" });
@@ -534,35 +549,29 @@ function ReaderApp() {
   };
 
   const onSaveNote = async (note) => {
-    // Build a single content string: optional title + body + passage citation.
-    const body = (note.title ? note.title + "\n\n" : "")
-               + (note.body || "")
-               + "\n\n— " + (noteModal.passage || "");
-
+    // Persist the note as a journal entry (so it appears on the Journal page),
+    // and also persist the highlight so the passage stays coloured next time.
     if (window.RuknAPI) {
-      // Save BOTH a highlight (so the passage stays coloured on re-open) and a
-      // journal entry (so the reflection shows up in the Journal page).
-      const colorBackend = COLOR_MAP[note.color] || "yellow";
+      const dbColor = COLOR_MAP[note.color] || "yellow";
       window.RuknAPI.call("save_highlight", {
-        book_id:       currentBookId,
-        page_number:   currentPage,
+        book_id:       CURRENT_BOOK_ID,
+        page_number:   page,
         selected_text: noteModal.passage || "",
-        color:         colorBackend,
+        color:         dbColor,
       });
+      const body = (note.title ? note.title + "\n\n" : "")
+                 + (note.body || "")
+                 + "\n\n— " + (noteModal.passage || "");
       const r = await window.RuknAPI.call("save_entry", {
         content: body.trim(),
         mood:    "📖",
         tags:    note.tags || [],
       });
-      if (!r.data.ok) {
-        flashToast(r.data.error || "Could not save note");
-        return;
-      }
+      if (!r.data.ok) { flashToast(r.data.error || "Could not save note"); return; }
     }
-
     setSavedNotes(prev => [
-      { id: `s${prev.length}`, page: currentPage, ...note,
-        excerpt: noteModal.passage },
+      { id: `s${prev.length}`, page,
+        ...note, excerpt: noteModal.passage },
       ...prev
     ]);
     setNoteModal({ open: false, passage: "", color: "amber" });
@@ -599,8 +608,8 @@ function ReaderApp() {
             <IChevronLeft size={16}/>
           </a>
           <div className="reader-title">
-            <span className="reader-book display">{bookMeta ? bookMeta.title : "The Prophet"}</span>
-            <span className="reader-chapter">Chapter {chapterIdx + 3} · {CHAPTERS[chapterIdx]}</span>
+            <span className="reader-book display">The Prophet</span>
+            <span className="reader-chapter">Chapter 3 · On Love</span>
           </div>
 
           <div className="reader-top-right">
@@ -635,10 +644,12 @@ function ReaderApp() {
             {bookmarked ? <IBookmarkFill size={17}/> : <IBookmark size={17}/>}
           </button>
           <div className="reader-tool-div"/>
-          <button className="reader-tool" title="Focus timer">
+          <button className={`reader-tool${timerOpen ? " active" : ""}`} title="Focus timer"
+                  onClick={() => { setTimerOpen(o => !o); setAudioOpen(false); }}>
             <IClock size={17}/>
           </button>
-          <button className="reader-tool" title="Ambient audio">
+          <button className={`reader-tool${audioOpen ? " active" : ""}`} title="Ambient audio"
+                  onClick={() => { setAudioOpen(o => !o); setTimerOpen(false); }}>
             <IMusic size={17}/>
           </button>
           <button className={`reader-tool${displayOpen ? " active" : ""}`}
@@ -652,25 +663,24 @@ function ReaderApp() {
         <main className={`reader-main${notesOpen ? " has-panel" : ""}`}>
           <div className="reader-page">
             <header className="reader-page-head">
-              <span className="reader-page-chapter">Chapter {chapterIdx + 3}</span>
-              <h1 className="reader-page-title display">{CHAPTERS[chapterIdx]}</h1>
+              <span className="reader-page-chapter">Chapter Three</span>
+              <h1 className="reader-page-title display">On Love</h1>
               <div className="reader-rule"/>
             </header>
 
             <article className="reader-prose">
-              {chapterParagraphs.map(p => (
+              {PASSAGE.map(p => (
                 <HighlightedParagraph key={p.id} para={p}
                                       onHighlightTap={onHighlightTap}/>
               ))}
             </article>
 
+            {/* Tiny on-page demo nudge — "try selecting" affordance */}
             <div className="reader-demo-hint">
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6,
-                             fontSize: 11, color: "var(--on-glass-soft)",
-                             letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <button onClick={simulateSelection}>
                 <IHighlight size={11}/>
-                Drag-select any passage to highlight or annotate it
-              </span>
+                <span>Try selecting a passage</span>
+              </button>
             </div>
           </div>
         </main>
@@ -731,29 +741,56 @@ function ReaderApp() {
 
         {/* ── Bottom progress bar ───────────────────────────────── */}
         <footer className="reader-footer">
-          <button className="reader-icon-btn" aria-label="Previous chapter"
-                  onClick={() => setChapterIdx(i => Math.max(0, i - 1))}
-                  disabled={chapterIdx === 0}>
+          <button className="reader-icon-btn" aria-label="Previous page" onClick={goPrev} disabled={page <= 1}>
             <IChevronLeft size={14}/>
           </button>
           <div className="reader-progress-block">
-            <div className="reader-progress">
-              <div className="reader-progress-fill"
-                   style={{ width: `${((chapterIdx + 1) / CHAPTERS.length) * 100}%` }}/>
-              <div className="reader-progress-thumb"
-                   style={{ left: `${((chapterIdx + 1) / CHAPTERS.length) * 100}%` }}/>
+            <div className="reader-progress"
+                 onClick={(e) => {
+                   const rect = e.currentTarget.getBoundingClientRect();
+                   const pct = (e.clientX - rect.left) / rect.width;
+                   setPage(Math.max(1, Math.min(TOTAL_PAGES, Math.round(pct * TOTAL_PAGES))));
+                 }}>
+              <div className="reader-progress-fill" style={{ width: `${(page/TOTAL_PAGES)*100}%` }}/>
+              <div className="reader-progress-thumb" style={{ left: `${(page/TOTAL_PAGES)*100}%` }}/>
             </div>
             <div className="reader-progress-meta">
-              <span>Chapter {chapterIdx + 3} · {CHAPTERS[chapterIdx]}</span>
-              <span>{chapterIdx + 1} / {CHAPTERS.length} chapters</span>
+              <span>Chapter 3 · On Love</span>
+              <span>
+                <input type="text"
+                       value={pageDraft}
+                       className="reader-page-input"
+                       onChange={(e) => setPageDraft(e.target.value.replace(/[^0-9]/g, ""))}
+                       onBlur={commitPageDraft}
+                       onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), commitPageDraft())}/>
+                {" "}/ {TOTAL_PAGES}
+              </span>
             </div>
           </div>
-          <button className="reader-icon-btn" aria-label="Next chapter"
-                  onClick={() => setChapterIdx(i => Math.min(CHAPTERS.length - 1, i + 1))}
-                  disabled={chapterIdx === CHAPTERS.length - 1}>
+          <button className="reader-icon-btn" aria-label="Next page" onClick={goNext} disabled={page >= TOTAL_PAGES}>
             <IChevronRight size={14}/>
           </button>
         </footer>
+
+        {/* ── Focus timer mini-panel ─────────────────────────────── */}
+        {timerOpen && (
+          <div className="reader-floating-panel" style={{ left: 90, bottom: 90 }} onClick={(e) => e.stopPropagation()}>
+            <button className="window-close" aria-label="Close" onClick={() => setTimerOpen(false)}>
+              <IClose size={12}/>
+            </button>
+            <ReaderFocusTimer/>
+          </div>
+        )}
+
+        {/* ── Ambient audio mini-panel ───────────────────────────── */}
+        {audioOpen && (
+          <div className="reader-floating-panel" style={{ left: 90, bottom: 90, width: 240 }} onClick={(e) => e.stopPropagation()}>
+            <button className="window-close" aria-label="Close" onClick={() => setAudioOpen(false)}>
+              <IClose size={12}/>
+            </button>
+            <ReaderAmbient/>
+          </div>
+        )}
 
         {/* ── Overlays ──────────────────────────────────────────── */}
         <HighlightPopover open={popover.open}
