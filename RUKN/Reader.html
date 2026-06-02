@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=1440, initial-scale=1"/>
+  <title>Rukn — Reader</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Manrope:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Kufi+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="styles.css?v=10"/>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root" data-screen-label="05 Reader"></div>
+
+  <script src="api/client.js"></script>
+  <script src="api/audio.js"></script>
+  <!-- PDF.js: renders uploaded PDFs in the reader, preserving text-layer
+       selection so the existing highlight popover keeps working. -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs" type="module"></script>
+  <script type="module">
+    // The mjs build exports an ESM. Bridge it onto window so the JSX can use it.
+    import * as pdfjsLib from "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs";
+    window.pdfjsLib = pdfjsLib;
+  </script>
+  <!-- Load order: scenes & icons → dashboard widgets (Sidebar, MOODS) → tweaks → reader -->
+  <script type="text/babel" src="scenes.jsx" data-presets="react"></script>
+  <script type="text/babel" src="icons.jsx" data-presets="react"></script>
+  <script type="text/babel" src="widgets.jsx" data-presets="react"></script>
+  <script type="text/babel" src="dashboard-widgets.jsx" data-presets="react"></script>
+  <script type="text/babel" src="tweaks-panel.jsx" data-presets="react"></script>
+  <script type="text/babel" src="reader.jsx" data-presets="react"></script>
+</body>
+</html>

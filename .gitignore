@@ -1,0 +1,51 @@
+# ─── Rukn .gitignore ───────────────────────────────────────────────────────
+
+# Uploaded user content. PDFs/EPUBs the app accepts at runtime — do NOT
+# commit these. The folder itself is kept via .gitkeep.
+RUKN/uploads/*
+!RUKN/uploads/.gitkeep
+
+# Original Claude Design bundle (9 MB binary). The contents have already
+# been extracted into RUKN/ — no need to commit the archive.
+RUKN.zip
+
+# Per-machine Claude Code settings (permission allowlists, env overrides).
+# These are personal preferences, not project artifacts.
+.claude/
+
+# Optional ambient audio. Big binary files, not source. Keep the folder
+# (which contains the README) but ignore the .mp3s themselves.
+RUKN/audio/*.mp3
+RUKN/audio/*.wav
+RUKN/audio/*.ogg
+
+# Misc OS / IDE noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# VS Code workspace state. Personal preferences — not source.
+.vscode/
+*.code-workspace
+
+# JetBrains
+.idea/
+
+# Logs & temp folders the design tool dropped here
+.tmp/
+*.log
+
+# Backups
+*.bak
+*.orig
+*.rej
+
+# Local environment overrides (if you ever add one)
+.env
+.env.local
+
+# OS X Finder
+.AppleDouble
+.LSOverride

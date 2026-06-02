@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=1440, initial-scale=1"/>
+  <title>Rukn — Set new password</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Manrope:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+  <link rel="stylesheet" href="styles.css?v=6"/>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root" data-screen-label="Reset password"></div>
+
+  <script src="api/client.js"></script>
+  <script src="api/audio.js"></script>
+  <script type="text/babel" src="auth.jsx" data-presets="react"></script>
+  <script type="text/babel" data-presets="react">
+    function ResetApp() {
+      const params = new URLSearchParams(window.location.search);
+      const token  = params.get("token") || "";
+
+      const [pw, setPw]           = React.useState("");
+      const [cfm, setCfm]         = React.useState("");
+      const [showPw, setShowPw]   = React.useState(false);
+      const [busy, setBusy]       = React.useState(false);
+      const [done, setDone]       = React.useState(false);
+      const [err, setErr]         = React.useState("");
+
+      React.useEffect(() => {
+        document.documentElement.dir = "ltr";
+        document.documentElement.lang = "en";
+        document.documentElement.setAttribute("data-palette", "dusk");
+      }, []);
+
+      const pwValid     = pw.length >= 8;
+      const matches     = cfm.length > 0 && cfm === pw;
+      const canSubmit   = pwValid && matches && token && !busy;
+
+      const submit = async (e) => {
+        e.preventDefault();
+        if (!canSubmit) return;
+        setErr(""); setBusy(true);
+        const r = await window.RuknAPI.reset(token, pw, cfm);
+        setBusy(false);
+        if (r.data.ok) {
+          setDone(true);
+          setTimeout(() => { window.location.href = "Login.html"; }, 1800);
+        } else {
+          setErr(r.data.error || "Reset failed.");
+        }
+      };
+
+      return (
+        <div className="auth-stage">
+          <aside className="auth-left">
+            <AuthVignette/>
+            <div className="auth-left-overlay">
+              <div className="brand brand-stacked">
+                <span className="dot"/>
+                <span className="mark">Rukn</span>
+                <span className="mark-ar">رُكن</span>
+              </div>
+              <p className="auth-pullquote">
+                <em>"Every door has a key. This one's yours."</em>
+                <span className="auth-pullquote-cite">— from the corner</span>
+              </p>
+            </div>
+          </aside>
+
+          <main className="auth-right">
+            <a href="Login.html" className="auth-back">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                   strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6"/>
+              </svg>
+              Back to log in
+            </a>
+
+            <div className="auth-card">
+              <div className="auth-header">
+                <h1 className="auth-title display">Set a new password.</h1>
+                <p className="auth-sub">
+                  Pick something at least 8 characters long. You'll be logged out of all other devices.
+                </p>
+              </div>
+
+              {!token ? (
+                <div className="field-error" style={{
+                    padding: "12px 14px",
+                    background: "rgba(220,100,80,0.10)",
+                    border: "1px solid rgba(220,100,80,0.40)",
+                    borderRadius: "var(--r-md)"}}>
+                  This URL is missing its reset token. Request a new link from the{" "}
+                  <a href="Forgot.html" className="link-quiet" style={{color: "var(--brass)"}}>
+                    forgot password page
+                  </a>.
+                </div>
+              ) : done ? (
+                <div className="field-error" style={{
+                    padding: "12px 14px",
+                    background: "rgba(110,180,140,0.10)",
+                    border: "1px solid rgba(110,180,140,0.40)",
+                    borderRadius: "var(--r-md)",
+                    color: "var(--on-glass)"}}>
+                  Password updated. Redirecting to log in…
+                </div>
+              ) : (
+                <form className="auth-form" onSubmit={submit}>
+                  {err ? (
+                    <div className="field-error" style={{
+                        marginBottom: 4, padding: "10px 12px",
+                        background: "rgba(220,100,80,0.10)",
+                        border: "1px solid rgba(220,100,80,0.40)",
+                        borderRadius: "var(--r-md)"}}>{err}</div>
+                  ) : null}
+
+                  <div className={"field" + (pw && !pwValid ? " has-error" : "")}>
+                    <label>New password</label>
+                    <div className="field-control">
+                      <input type={showPw ? "text" : "password"}
+                             value={pw} onChange={(e) => setPw(e.target.value)}
+                             autoComplete="new-password" placeholder="••••••••"/>
+                      <button type="button" className="field-trailing"
+                              onClick={() => setShowPw(s => !s)}
+                              aria-label={showPw ? "Hide" : "Show"}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      </button>
+                    </div>
+                    {pw && !pwValid ? (
+                      <div className="field-error">At least 8 characters.</div>
+                    ) : null}
+                  </div>
+
+                  <div className={"field" + (cfm && !matches ? " has-error" : "")}>
+                    <label>Confirm new password</label>
+                    <div className="field-control">
+                      <input type="password"
+                             value={cfm} onChange={(e) => setCfm(e.target.value)}
+                             autoComplete="new-password" placeholder="••••••••"/>
+                    </div>
+                    {cfm && !matches ? (
+                      <div className="field-error">Passwords don't match.</div>
+                    ) : null}
+                  </div>
+
+                  <button type="submit" className="btn btn-primary btn-block"
+                          disabled={!canSubmit}>
+                    {busy ? "Updating…" : "Set new password"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<ResetApp/>);
+  </script>
+</body>
+</html>
