@@ -1,116 +1,203 @@
-# Rukn — How to run this project
+# Rukn — Setup Guide
 
-The interactive prototype lives in **`RUKN/`**. It's the React/JSX high-fidelity prototype, served straight from disk via Babel-standalone, talking to a PHP+MySQL backend that sits inside `RUKN/api/`.
+This document covers two ways to run Rukn on your machine. The fast path uses our one-click launcher; the alternative is the traditional XAMPP / Apache / htdocs setup that you may already know.
 
-## What you need
+---
 
-- **Windows** (the launcher is a `.bat` file)
-- **XAMPP** installed at any of: `C:\xampp\`, `C:\xampp1\`, `D:\xampp\`, `C:\xampp7\`, `C:\xampp8\`, or `C:\Program Files\xampp\`. Grab it from <https://www.apachefriends.org/> if you don't already have it.
+## What you'll need either way
 
-Nothing else. No Composer, no npm, no React build step — the prototype uses Babel standalone from a CDN.
+- **Windows 10 or 11**
+- **XAMPP** with PHP 8 + MySQL/MariaDB (the default XAMPP bundle is fine).
+  Install from <https://www.apachefriends.org/>. Common install paths the launcher detects: `C:\xampp\`, `C:\xampp1\`, `C:\xampp7\`, `C:\xampp8\`, `D:\xampp\`, `C:\Program Files\xampp\`.
+- **A web browser** (Chrome, Edge, or Firefox — anything modern)
 
-## First-time setup
+No Composer, no npm, no PHP version manager, no Node, no build step.
 
-1. Unzip the project anywhere — Desktop, Documents, D:\projects, wherever.
-2. Open the unzipped folder.
-3. Double-click **`start.bat`**.
+---
 
-That's it. The script will:
+# Path A — One-click launch (recommended)
 
-1. Find your XAMPP install automatically.
-2. Start MySQL if it isn't already running.
-3. Create the `rukn` database and import `database/schema.sql` (only on first run).
-4. Start a PHP server on `http://localhost:8000`.
-5. Open the app in your default browser at **`http://localhost:8000/RUKN/Homepage.html`**.
+The simplest way. PHP's built-in server runs the app; you don't touch Apache or htdocs at all.
 
-A terminal window will stay open showing PHP server logs. **Keep it open while you use the app** — closing it stops the server.
+### First-time setup
 
-## Logging in
+1. **Unzip / clone the project** anywhere you like — Desktop, Documents, D:\projects, wherever has space.
+2. **Open the unzipped folder**.
+3. **Double-click `start.bat`**.
 
-The schema seeds one demo user:
+That single click will:
 
-- **Email:** `layla@example.com`
-- **Password:** `rukn12345`
+| Step | What `start.bat` does |
+|---|---|
+| 1 | Auto-detect your XAMPP install (checks the common paths) |
+| 2 | Start MySQL in a minimized window if it isn't already running (waits up to 15 s for it to come online) |
+| 3 | Import `database/schema.sql` into a fresh `rukn` database **only if the database doesn't already exist** (so daily runs skip this) |
+| 4 | Start PHP's built-in web server on `http://localhost:8000` from the project root |
+| 5 | Open your default browser at **`http://localhost:8000/RUKN/Homepage.html`** |
 
-Or click **Create account** to register a fresh one. Username is derived automatically from your name — lowercase, underscores instead of spaces.
+You'll see a PHP server log window. **Keep that window open while you use the app** — closing it stops the server.
 
-## Daily use (after first-time setup)
+### Logging in
 
-Just double-click `start.bat`. The schema import is skipped automatically. Browser opens. Ready to go.
+The schema seeds one demo user so the app has data on day one:
 
-## Stopping everything
+| Email | Password |
+|---|---|
+| `layla@example.com` | `rukn12345` |
 
-Either:
-- Press **Ctrl+C** in the PHP server window, **or**
+Or click **Create account** to register a fresh one.
+
+### Daily use (after that first run)
+
+Just double-click `start.bat`. The schema import is skipped automatically. Browser opens. Ready.
+
+### Stopping
+
+- Press **`Ctrl + C`** in the PHP server window, **or**
 - Double-click **`stop.bat`** (also shuts down MySQL).
 
-## Project structure
+---
 
-```
-Group02_RUKN_finalproject/
-├── start.bat                 ← double-click to run
-├── stop.bat
-├── SETUP.md                  ← (this file)
-├── BOOT.md                   ← detailed flows + troubleshooting
-├── README.md                 ← submission overview
-│
-├── RUKN/                     ← the interactive prototype (THIS is what runs)
-│   ├── Homepage.html         ← entry point — guest landing
-│   ├── Login.html            ← log in / create account
-│   ├── Dashboard.html        ← signed-in home, widgets, ambience
-│   ├── Library.html          ← personal bookshelf
-│   ├── Journal.html          ← reflections list + detail
-│   ├── Settings.html         ← account, preferences, plan, data
-│   ├── Reader.html           ← passage reader (Premium feature)
-│   ├── styles.css            ← 3,300-line design system
-│   ├── *.jsx                 ← React components (auth, dashboard, library, …)
-│   └── api/                  ← PHP backend
-│       ├── db.php            ← PDO connection to MySQL
-│       ├── auth.php          ← me / register / login / logout (JSON)
-│       ├── api.php           ← dashboard / library / journal /
-│       │                       settings / upgrade / export / delete
-│       └── client.js         ← tiny fetch wrapper, used by the JSX
-│
-├── database/schema.sql       ← MySQL 3NF schema + seed data
-├── prototype/                ← earlier copy of the JSX (reference only)
-├── docs/                     ← Assignment 2 + 3 reports
-├── figma/                    ← Figma file URL
-└── screenshots/              ← high-res renders of all 7 screens
+# Path B — Traditional XAMPP + Apache + htdocs
+
+For graders or developers who'd rather serve the app through Apache the classic way. Slightly more steps, but you get everything that comes with Apache (`.htaccess`, virtual hosts, etc.).
+
+### Step 1 — Start XAMPP services
+
+Open the XAMPP Control Panel (`xampp-control.exe`) and click **Start** next to:
+
+- **Apache** — serves the frontend HTML + the PHP backend
+- **MySQL** — serves the `rukn` database
+
+Wait for both to turn green.
+
+### Step 2 — Place the project under `htdocs`
+
+Apache by default serves files from `C:\xampp\htdocs\` (or wherever your XAMPP lives — substitute that path everywhere below).
+
+You have two options:
+
+**Option B1 — Copy the project**
+
+Simplest. Copy the entire unzipped project folder into htdocs:
+
+```powershell
+Copy-Item -Path "<wherever you unzipped>\Group02_RUKN_CMPE372_CE_Final_Project" `
+          -Destination "C:\xampp\htdocs\rukn" `
+          -Recurse
 ```
 
-The whole prototype is served from `RUKN/`. Apache or PHP's built-in server can be pointed at the project root — the launcher uses the built-in server on port 8000.
+You now have `C:\xampp\htdocs\rukn\RUKN\Homepage.html`, etc.
 
-## What works end-to-end
+> **Note:** the htdocs and source-edit folders are now separate copies. If you edit a file in your source folder, you'll need to re-copy it for Apache to see the change. Use option B2 if you want a single source of truth.
 
-| Flow | What persists in MySQL |
-|---|---|
-| **Register** new account | `users` + `free_users` + `user_preferences` + `journals` (atomic transaction) |
-| **Log in** as existing user | session cookie set; `last_login` updated |
-| **Log out** | session destroyed |
-| **Save journal entry** from the Today's Journal widget | `journal_entries` + `tags` + `journal_entry_tags` (atomic) |
-| **Change palette / sound / volume / font** in Settings → Save preferences | `user_preferences` row updated |
-| **Upgrade to Premium** in Settings → Plan | row moved from `free_users` to `paid_users` |
-| **Cancel subscription** | reverse — row moved back to `free_users` |
-| **Export account data** | full JSON dump of every row tied to your user |
-| **Delete account** | `DELETE FROM users` cascades to every dependent table |
+**Option B2 — Symlink / junction (edit-in-place)**
+
+This makes htdocs/rukn a *link* to your project folder, so edits in the project folder show up immediately. Run **as administrator** (right-click PowerShell → Run as administrator):
+
+```powershell
+New-Item -ItemType Junction `
+         -Path "C:\xampp\htdocs\rukn" `
+         -Target "<full path to your project folder>"
+```
+
+The junction doesn't need admin if you're on the same drive, but it never hurts.
+
+### Step 3 — Import the database
+
+Open **phpMyAdmin** at <http://localhost/phpmyadmin>.
+
+1. Click **Import** in the top tab bar.
+2. Choose file → `database/schema.sql` from your project folder.
+3. Scroll down → **Import**.
+
+This creates the `rukn` database, all 15 tables, and the seed data (Layla user, three books, two journal entries, four tags).
+
+Alternatively, from the terminal:
+
+```powershell
+& "C:\xampp\mysql\bin\mysql.exe" -u root < "<full path>\database\schema.sql"
+```
+
+### Step 4 — Open the app
+
+Visit <http://localhost/rukn/RUKN/Homepage.html>.
+
+Sign in with `layla@example.com` / `rukn12345` or create a new account.
+
+### Step 5 — Stopping
+
+- Open the XAMPP Control Panel and click **Stop** next to Apache and MySQL, **or**
+- Run `stop.bat` from the project folder (auto-detects XAMPP and stops both)
+
+---
 
 ## Troubleshooting
 
-| Error | What to do |
+| Symptom | What to do |
 |---|---|
-| `Could not find XAMPP on this machine` | Install XAMPP from <https://www.apachefriends.org/> and rerun. |
-| `MySQL did not come online within 15 seconds` | Open the XAMPP Control Panel (`xampp-control.exe`) and click **Start** next to MySQL. Then rerun. |
-| `Port 8000 is in use` | Something else is on port 8000 (another XAMPP, IIS, Skype). Edit the last line of `start.bat` to use port 8080, then visit `http://localhost:8080/RUKN/Homepage.html`. |
-| Login as Layla fails | The schema may have been imported before the password fix. Drop the DB in phpMyAdmin (`DROP DATABASE rukn;`) and rerun `start.bat`. |
-| `Access denied for user 'root'` | Your XAMPP root user has a password. Edit `RUKN/api/db.php` line 13 (`$pass = '';`) and set it. |
-| Page loads but spins forever on Dashboard | Check DevTools → Network. Failing call to `api/api.php?action=dashboard` will have its error in the JSON body. |
+| `Could not find XAMPP on this machine` | Install XAMPP from <https://www.apachefriends.org/> and re-run `start.bat`. |
+| `MySQL did not come online within 15 seconds` | Open the XAMPP Control Panel and click **Start** next to MySQL. Then re-run. |
+| `Port 8000 is in use` (Path A) | Edit the last line of `start.bat` and change `-S localhost:8000` to `-S localhost:8080`, then open `http://localhost:8080/RUKN/Homepage.html` instead. |
+| `Port 80 is in use` (Path B) | Skype/IIS/another Apache is holding it. Open XAMPP Control Panel → Apache → **Config → httpd.conf** → change `Listen 80` to `Listen 8080`. Then visit `http://localhost:8080/rukn/RUKN/Homepage.html`. |
+| Login as Layla fails with "incorrect password" | The schema may have been imported from an older copy. Drop the DB in phpMyAdmin (`DROP DATABASE rukn;`) and re-import. |
+| `Database error: Access denied for user 'root'` | Your XAMPP root user has a password. Edit `RUKN/api/db.php` line 13 (`$pass = '';`) and put your password there. |
+| Pages load but spin forever | Check DevTools → Network → click the failing `api.php` request → look at the JSON body for the error message (we surface PDO errors verbatim). |
+| Highlights don't save | You're not logged in. The auto-guard should bounce you to Login.html — if it doesn't, hard-refresh and try again. |
 
-## Note on the visual prototype
+---
 
-The HTML/CSS/JSX in `RUKN/` is the original Claude Design high-fidelity prototype — Desert Dusk palette, Cormorant Garamond display type, glassmorphic surfaces, drifting motes, animated scenes. It hasn't been visually changed. What's been added is:
+## What's in the package
 
-- `RUKN/api/` — the PHP+MySQL backend
-- `RUKN/api/client.js` — a tiny fetch wrapper exposed as `window.RuknAPI`
-- Minimal patches in `auth.jsx`, `dashboard-widgets.jsx`, `settings.jsx` to wire real fetch() calls to those endpoints
+```
+Group02_RUKN_CMPE372_CE_Final_Project/
+├── start.bat / stop.bat              ← one-click launcher (Path A)
+├── README.md                         ← project overview
+├── SETUP.md                          ← (this file)
+│
+├── RUKN/                             ← the interactive prototype
+│   ├── Homepage.html                 ← public landing
+│   ├── Login.html                    ← log in / create account
+│   ├── Forgot.html / Reset.html      ← password reset flow
+│   ├── Dashboard.html                ← signed-in home
+│   ├── Library.html                  ← book grid
+│   ├── Journal.html                  ← reflections list + detail
+│   ├── Reader.html                   ← passage view with highlights
+│   ├── Settings.html                 ← account, preferences, plan, export
+│   ├── styles.css                    ← 3,300-line design system
+│   ├── *.jsx                         ← React components (Babel-standalone)
+│   ├── api/                          ← PHP+MySQL backend (JSON API)
+│   ├── audio/                        ← optional MP3 drop folder
+│   └── uploads/                      ← (gitignored runtime folder)
+│
+├── database/schema.sql               ← 15-table 3NF schema + seed data
+├── docs/                             ← Assignment 2 + 3 reports (md + pdf)
+├── figma/                            ← Figma file URL
+├── screenshots/                      ← high-res renders of all 7 screens
+├── Group02_CMPE_FinalProject.md      ← the final-submission report
+├── Group02_RUKN_Assignment3.md/.pdf  ← Assignment 3 (already submitted)
+└── RUKN_Presentation.pptx            ← demo slides
+```
 
-The visual fidelity is preserved.
+For an architectural map of the JSX components + which PHP endpoint backs each UI action, see [`RUKN/STRUCTURE.md`](RUKN/STRUCTURE.md).
+
+---
+
+## Demo script (90-second tour)
+
+1. **`start.bat`** → browser opens at Homepage.
+2. Click **Begin** → register account → land on the Dashboard with the warm Maghrib scene and three glass widgets.
+3. Click a sound chip in the dock — real audio plays (procedural by default; drop an `.mp3` into `RUKN/audio/` to override).
+4. Type something into the "Today's journal" widget, pick a mood, add a tag, **Save entry** → row goes into `journal_entries`.
+5. Sidebar → **Library** → click a book → Reader opens to *The Prophet*, "On Love".
+6. Drag-select any phrase → amber/rose/olive/sky popover appears → click a color → toast confirms → check phpMyAdmin: row appears in `highlights`.
+7. Drag-select again → **Add note** → write a reflection → Save → cross-creates a journal entry AND a highlight.
+8. Sidebar → **Journal** → your saved entry is on the left with the passage cited.
+9. Sidebar → **Settings** → change the palette → instantly updates everywhere → **Log out** → back at Homepage.
+10. **`stop.bat`** when done.
+
+---
+
+## License
+
+Course-submission code. The Claude Design React/JSX prototype originated from Anthropic's design tool; the PHP+MySQL backend, real authentication, schema, file plumbing, and bilingual scaffolding were authored by the student. *The Prophet* excerpts in `RUKN/reader.jsx` are public domain.
