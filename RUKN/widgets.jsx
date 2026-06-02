@@ -58,67 +58,9 @@ const STRINGS = {
   }
 };
 
-// ── Tiny global language helper ──────────────────────────────────────────────
-// Pages call window.Rukn.lang() to get the active language code, and
-// window.Rukn.setLang(code) to flip it. The choice is persisted on the
-// backend via update_preference (preferred_lang) and survives reloads.
-(function () {
-  if (!window.Rukn) window.Rukn = {};
-  const KEY = "rukn.lang";
-  let cur = (() => {
-    try {
-      const v = localStorage.getItem(KEY);
-      return v === "ar" ? "ar" : "en";
-    } catch (e) { return "en"; }
-  })();
-
-  function apply(code) {
-    const isAr = code === "ar";
-    document.documentElement.lang = isAr ? "ar" : "en";
-    document.documentElement.dir  = isAr ? "rtl" : "ltr";
-  }
-
-  window.Rukn.lang    = () => cur;
-  window.Rukn.setLang = (code) => {
-    cur = code === "ar" ? "ar" : "en";
-    try { localStorage.setItem(KEY, cur); } catch (e) {}
-    apply(cur);
-    // Persist on the user's account if the API is reachable.
-    if (window.RuknAPI) {
-      window.RuknAPI.call("update_preference", { preferred_lang: cur === "ar" ? "AR" : "EN" });
-    }
-    // Notify subscribers (page-level components) so they can re-render.
-    window.dispatchEvent(new CustomEvent("rukn:lang", { detail: cur }));
-    return cur;
-  };
-  apply(cur);
-})();
-
-// React hook that re-renders the component when window.Rukn.setLang fires.
-function useRuknLang() {
-  const [lang, set] = React.useState(() => (window.Rukn && window.Rukn.lang()) || "en");
-  React.useEffect(() => {
-    const handler = (e) => set(e.detail || "en");
-    window.addEventListener("rukn:lang", handler);
-    return () => window.removeEventListener("rukn:lang", handler);
-  }, []);
-  return lang;
-}
-
-// ── Language pill (EN / AR) — drop this anywhere; it self-syncs ─────────────
-function LangPill({ compact = true }) {
-  const lang = useRuknLang();
-  const cls = "lang-pill" + (compact ? " compact" : "");
-  return (
-    <div className={cls}>
-      <button className={lang === "en" ? "active" : ""}
-              onClick={() => window.Rukn.setLang("en")}>EN</button>
-      <span/>
-      <button className={lang === "ar" ? "active" : ""}
-              onClick={() => window.Rukn.setLang("ar")}>AR</button>
-    </div>
-  );
-}
+// LangPill + useRuknLang now live in i18n.jsx (loaded by every HTML wrapper
+// before this file). They're available as globals so this file uses them
+// without re-defining them.
 
 // ── Sound chips ───────────────────────────────────────────────────────────────
 function SoundIcon({ id, ...p }) {
